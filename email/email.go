@@ -25,13 +25,9 @@ type Notifier struct {
 // something is not healthy.
 func (n Notifier) Notify(results []checkup.Result) error {
 	for _, r := range results {
-		if !r.Healthy {
-			logrus.Debugf("%s is %s: sending email", r.Title, r.Status())
-			if err := n.sendEmail(r); err != nil {
-				return err
-			}
-		} else {
-			logrus.Debugf("%s is %s", r.Title, r.Status())
+		logrus.Debugf("%s is %s: sending email", r.Title, r.Status())
+		if err := n.sendEmail(r); err != nil {
+			return err
 		}
 	}
 
@@ -42,11 +38,10 @@ func (n Notifier) sendEmail(result checkup.Result) error {
 	// create the template
 	body := fmt.Sprintf(`From: %s
 To: %s
-Subject: [UPMAIL]: %s %s
-%s
+Subject: %s %s
 
-Time: %s
-`, n.Sender, n.Recipient, result.Title, result.Status(), result.String(), time.Now().Format(time.UnixDate))
+Checkup run at %s for the link %s resulted in %s
+`, n.Sender, n.Recipient, result.Title, result.Status(), time.Now().Format(time.UnixDate), result.Title, result.Status())
 
 	// send the email
 	if err := smtp.SendMail(n.Server, n.Auth, n.Sender, []string{n.Recipient}, []byte(body)); err != nil {

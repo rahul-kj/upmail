@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/jessfraz/upmail/email"
+	"github.com/rahul-kj/upmail/email"
 	"github.com/sourcegraph/checkup"
 )
 
@@ -130,7 +130,7 @@ func main() {
 	ticker = time.NewTicker(dur)
 
 	for range ticker.C {
-		if err := c.CheckAndStore(); err != nil {
+		if _, err := c.Check(); err != nil {
 			logrus.Warnf("check failed: %v", err)
 		}
 	}
