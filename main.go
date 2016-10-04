@@ -16,6 +16,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/rahul-kj/upmail/email"
 	"github.com/sourcegraph/checkup"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 const (
@@ -26,63 +27,24 @@ const (
 )
 
 var (
-	configFile string
-	recipient  string
-	interval   string
-
-	smtpServer   string
-	smtpSender   string
-	smtpUsername string
-	smtpPassword string
-
-	debug   bool
-	version bool
+	configFile   = kingpin.Flag("config", "checkup.json config file location").Default("checkup.json").OverrideDefaultFromEnvar("CONFIG_FILE").String()
+	recipient    = kingpin.Flag("recipient", "recipient for email notifications").OverrideDefaultFromEnvar("RECIPIENT_EMAIL").Required().String()
+	interval     = kingpin.Flag("interval", "check interval (ex. 5ms, 10s, 1m, 3h)").Default("10m").OverrideDefaultFromEnvar("INTERVAL").String()
+	smtpServer   = kingpin.Flag("smtp-server", "SMTP server for email notifications").OverrideDefaultFromEnvar("SMTP_SERVER").Required().String()
+	smtpSender   = kingpin.Flag("sender", "SMTP default sender email address for email notifications").OverrideDefaultFromEnvar("SENDER_EMAIL").Required().String()
+	smtpUsername = kingpin.Flag("smtp-username", "SMTP server username").OverrideDefaultFromEnvar("SMTP_USERNAME").String()
+	smtpPassword = kingpin.Flag("smtp-password", "SMTP server password").OverrideDefaultFromEnvar("SMTP_PASSWORD").String()
+	debug        = kingpin.Flag("debug", "run in debug mode").Default("false").OverrideDefaultFromEnvar("DEBUG").Bool()
 )
 
-func init() {
-	// parse flags
-	flag.StringVar(&configFile, "config", "checkup.json", "config file location")
-	flag.StringVar(&recipient, "recipient", "", "recipient for email notifications")
-	flag.StringVar(&interval, "interval", "10m", "check interval (ex. 5ms, 10s, 1m, 3h)")
+func main() {
+	kingpin.Version(VERSION)
+	kingpin.Parse()
 
-	flag.StringVar(&smtpServer, "server", "", "SMTP server for email notifications")
-	flag.StringVar(&smtpSender, "sender", "", "SMTP default sender email address for email notifications")
-	flag.StringVar(&smtpUsername, "username", "", "SMTP server username")
-	flag.StringVar(&smtpPassword, "password", "", "SMTP server password")
-
-	flag.BoolVar(&version, "version", false, "print version and exit")
-	flag.BoolVar(&version, "v", false, "print version and exit (shorthand)")
-	flag.BoolVar(&debug, "d", false, "run in debug mode")
-
-	flag.Usage = func() {
-		fmt.Fprint(os.Stderr, fmt.Sprintf(BANNER, VERSION))
-		flag.PrintDefaults()
-	}
-
-	flag.Parse()
-
-	if version {
-		fmt.Printf("%s", VERSION)
-		os.Exit(0)
-	}
-
-	// set log level
-	if debug {
+	if *debug {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 
-	if configFile == "" {
-		usageAndExit("Config file cannot be empty.", 1)
-	}
-	if recipient == "" {
-		usageAndExit("Recipient cannot be empty.", 1)
-	}
-	if smtpServer == "" {
-		usageAndExit("SMTP server cannot be empty.", 1)
-	}
-}
-
-func main() {
 	var ticker *time.Ticker
 	// On ^C, or SIGTERM handle exit.
 	s := make(chan os.Signal, 1)
@@ -96,7 +58,7 @@ func main() {
 		}
 	}()
 
-	configBytes, err := ioutil.ReadFile(configFile)
+	configBytes, err := ioutil.ReadFile(*configFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -108,22 +70,22 @@ func main() {
 	}
 
 	n := email.Notifier{
-		Recipient: recipient,
-		Server:    smtpServer,
-		Sender:    smtpSender,
+		Recipient: *recipient,
+		Server:    *smtpServer,
+		Sender:    *smtpSender,
 		Auth: smtp.PlainAuth(
 			"",
-			smtpUsername,
-			smtpPassword,
-			strings.SplitN(smtpServer, ":", 2)[0],
+			*smtpUsername,
+			*smtpPassword,
+			strings.SplitN(*smtpServer, ":", 2)[0],
 		),
 	}
 	c.Notifier = n
 
 	// parse the duration
-	dur, err := time.ParseDuration(interval)
+	dur, err := time.ParseDuration(*interval)
 	if err != nil {
-		logrus.Fatalf("parsing %s as duration failed: %v", interval, err)
+		logrus.Fatalf("parsing %s as duration failed: %v", *interval, err)
 	}
 
 	logrus.Infof("Starting checks that will send emails to: %s", recipient)
