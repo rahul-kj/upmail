@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/sourcegraph/checkup"
+	"github.com/rahul-kj/checkup"
 )
 
 // Notifier sends an email notification when something is wrong.

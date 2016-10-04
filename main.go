@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/rahul-kj/checkup"
 	"github.com/rahul-kj/upmail/email"
-	"github.com/sourcegraph/checkup"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
