@@ -88,7 +88,7 @@ func main() {
 		logrus.Fatalf("parsing %s as duration failed: %v", *interval, err)
 	}
 
-	logrus.Infof("Starting checks that will send emails to: %s", recipient)
+	logrus.Infof("Starting checks that will send emails to: %s", *recipient)
 	ticker = time.NewTicker(dur)
 
 	for range ticker.C {
